@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>증강 테트리스 VS - 1v1 Battle Mode</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712; /* slate-950 */
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* P1 Neon Glow */
+        .neon-border-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            border: 2px solid rgba(6, 182, 212, 0.8);
+        }
+        .neon-text-cyan {
+            text-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+        }
+        /* P2 Neon Glow */
+        .neon-border-magenta {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+            border: 2px solid rgba(236, 72, 153, 0.8);
+        }
+        .neon-text-magenta {
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+        }
+        /* Card Tiers */
+        .augment-card-gold {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(217, 119, 6, 0.25) 100%);
+            border: 2px solid rgba(251, 191, 36, 0.8);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+        }
+        .augment-card-silver {
+            background: linear-gradient(135deg, rgba(209, 213, 219, 0.1) 0%, rgba(107, 114, 128, 0.25) 100%);
+            border: 2px solid rgba(156, 163, 175, 0.8);
+            box-shadow: 0 0 15px rgba(156, 163, 175, 0.3);
+        }
+        .augment-card-bronze {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(120, 53, 4, 0.2) 100%);
+            border: 2px solid rgba(180, 83, 9, 0.7);
+            box-shadow: 0 0 15px rgba(180, 83, 9, 0.2);
+        }
+        /* Shake animations */
+        @keyframes shakeP1 {
+            0%, 100% { transform: translate(0, 0); }
+            20%, 60% { transform: translate(-4px, 2px); }
+            40%, 80% { transform: translate(4px, -2px); }
+        }
+        @keyframes shakeP2 {
+            0%, 100% { transform: translate(0, 0); }
+            20%, 60% { transform: translate(4px, -2px); }
+            40%, 80% { transform: translate(-4px, 2px); }
+        }
+        .shake-p1 { animation: shakeP1 0.25s ease-in-out; }
+        .shake-p2 { animation: shakeP2 0.25s ease-in-out; }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col min-h-screen overflow-x-hidden">
+
+    <header class="border-b border-slate-900 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 px-4 py-2.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-bolt text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-pink-400 font-orbitron">
+                        AUGMENTED TETRIS VS
+                    </h1>
+                    <p class="text-[9px] text-slate-500 font-semibold tracking-widest uppercase">증강 테트리스 1대1 라이벌 대전</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="btn-show-augments" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-950 bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 transition duration-200">
+                    <i class="fa-solid fa-book-open mr-1"></i> 증강 백과사전
+                </button>
+                <button id="btn-how-to" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-800 text-slate-300 transition duration-200">
+                    <i class="fa-solid fa-gamepad mr-1"></i> 게임 조작 설명
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-2 md:p-4 grid grid-cols-2 md:grid-cols-12 gap-3 relative">
+        
+        <!-- PLAYER 1 AREA (Left Column - Cyan Theme) -->
+        <section class="col-span-1 md:col-span-5 bg-slate-950/40 border border-cyan-950/40 rounded-2xl p-2 md:p-4 flex flex-col lg:flex-row gap-2 md:gap-4 relative">
+            <div class="absolute top-2 left-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[8px] md:text-[10px] font-bold text-cyan-400 font-orbitron">P1 SYSTEM</div>
+            
+            <!-- Left Info Panel (Dynamic flex direction based on screen width to save horizontal space) -->
+            <div class="flex flex-row lg:flex-col gap-2 lg:w-28 xl:w-32 justify-between mt-6 lg:mt-0 w-full">
+                <!-- Hold box -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 flex-1 lg:flex-none">
+                    <span class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold block mb-1">HOLD [E]</span>
+                    <div class="flex items-center justify-center h-12 md:h-16 bg-slate-900/40 border border-slate-900 rounded-lg overflow-hidden">
+                        <canvas id="p1-hold" class="w-10 h-10 md:w-14 md:h-14 block"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 flex flex-col gap-1 md:gap-2 flex-grow lg:flex-none">
+                    <div>
+                        <div class="text-[8px] md:text-[9px] text-slate-500 font-semibold">ATTACK LINE</div>
+                        <div id="p1-score" class="text-sm md:text-lg font-bold font-orbitron text-cyan-400">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] md:text-[9px] text-slate-500 font-semibold">CLEARED LINES</div>
+                        <div id="p1-lines" class="text-xs md:text-sm font-bold font-orbitron">0 / 3</div>
+                        <div class="w-full bg-slate-900 h-1 md:h-1.5 rounded-full mt-1 overflow-hidden">
+                            <div id="p1-progress" class="bg-cyan-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Augments -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 flex-1 lg:flex-grow min-h-[60px] md:min-h-[120px]">
+                    <span class="text-[8px] md:text-[9px] text-slate-400 uppercase tracking-widest font-bold block mb-1">P1 AUGMENTS</span>
+                    <div id="p1-augments-list" class="flex flex-col gap-1 overflow-y-auto max-h-[60px] md:max-h-[160px]">
+                        <div class="text-[8px] md:text-[9px] text-slate-600 text-center py-2 md:py-4">증강 없음</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Canvas Box -->
+            <div class="flex-grow flex flex-col items-center justify-center w-full">
+                <div id="p1-wrapper" class="relative rounded-2xl overflow-hidden neon-border-cyan bg-slate-950 p-1 w-full max-w-[240px] md:max-w-[280px] aspect-[1/2] transition-all duration-300">
+                    <canvas id="p1-canvas" class="w-full h-full block rounded-xl relative z-10 bg-slate-950/90"></canvas>
+                </div>
+            </div>
+
+            <!-- Next box -->
+            <div class="lg:w-20 flex flex-row lg:flex-col gap-2 justify-center items-center lg:justify-start w-full lg:w-auto">
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 w-16 md:w-20">
+                    <span class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold block mb-1">NEXT</span>
+                    <div class="flex items-center justify-center h-12 md:h-16 bg-slate-900/40 border border-slate-900 rounded-lg overflow-hidden">
+                        <canvas id="p1-next" class="w-10 h-10 md:w-14 md:h-14 block"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MIDDLE STATS & CONTROLS (Spans both columns on mobile, sits nicely in center on desktop) -->
+        <section class="col-span-2 md:col-span-2 flex flex-row md:flex-col gap-3 md:gap-4 justify-around md:justify-center items-center order-first md:order-none bg-slate-950/60 border border-slate-900 rounded-2xl p-3 md:p-4 w-full">
+            <div class="text-center">
+                <div class="text-[8px] md:text-[10px] tracking-widest text-indigo-400 font-extrabold uppercase mb-1">MATCH STATE</div>
+                <div id="timer" class="text-xl md:text-3xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">00:00</div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="vs-banner" class="text-center py-1 md:py-2 px-2 md:px-4 rounded-xl border border-slate-800 bg-slate-900/50 flex-grow md:flex-grow-0 max-w-[140px] md:max-w-none">
+                <span class="text-[9px] md:text-xs font-bold text-slate-400 font-orbitron">READY</span>
+            </div>
+
+            <div class="flex flex-row md:flex-col gap-1.5 md:gap-2">
+                <button id="btn-start" class="px-2.5 md:px-4 py-1.5 md:py-2.5 rounded-lg md:rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-pink-500 hover:brightness-110 font-bold text-[10px] md:text-xs text-white shadow-lg transition duration-200">
+                    <i class="fa-solid fa-play mr-1"></i> 시작
+                </button>
+                <button id="btn-pause" class="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/30 text-[10px] md:text-xs text-slate-400" disabled>
+                    <i class="fa-solid fa-pause mr-1"></i> 대기
+                </button>
+                <button id="btn-reset" class="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-slate-800 hover:border-rose-950 bg-slate-900/30 text-[10px] md:text-xs text-slate-400 hover:text-rose-400">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> 리셋
+                </button>
+            </div>
+
+            <div class="hidden lg:block text-[10px] text-slate-500 text-center leading-relaxed">
+                <span class="font-bold text-indigo-400">★ 핵심 대전 룰 ★</span><br>
+                2줄 이상 동시 제거 시<br>상대 밑단에 훼방용<br>장애물 쓰레기줄이 전송됩니다!
+            </div>
+        </section>
+
+        <!-- PLAYER 2 AREA (Right Column - Pink Theme) -->
+        <section class="col-span-1 md:col-span-5 bg-slate-950/40 border border-pink-950/40 rounded-2xl p-2 md:p-4 flex flex-col md:flex-col lg:flex-row-reverse gap-2 md:gap-4 relative">
+            <div class="absolute top-2 right-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-[8px] md:text-[10px] font-bold text-pink-400 font-orbitron">P2 SYSTEM</div>
+            
+            <!-- Right Info Panel -->
+            <div class="flex flex-row lg:flex-col gap-2 lg:w-28 xl:w-32 justify-between mt-6 lg:mt-0 w-full">
+                <!-- Hold box -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 flex-1 lg:flex-none">
+                    <span class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold block mb-1">HOLD [/]</span>
+                    <div class="flex items-center justify-center h-12 md:h-16 bg-slate-900/40 border border-slate-900 rounded-lg overflow-hidden">
+                        <canvas id="p2-hold" class="w-10 h-10 md:w-14 md:h-14 block"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 flex flex-col gap-1 md:gap-2 flex-grow lg:flex-none">
+                    <div>
+                        <div class="text-[8px] md:text-[9px] text-slate-500 font-semibold">ATTACK LINE</div>
+                        <div id="p2-score" class="text-sm md:text-lg font-bold font-orbitron text-pink-400">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] md:text-[9px] text-slate-500 font-semibold">CLEARED LINES</div>
+                        <div id="p2-lines" class="text-xs md:text-sm font-bold font-orbitron">0 / 3</div>
+                        <div class="w-full bg-slate-900 h-1 md:h-1.5 rounded-full mt-1 overflow-hidden">
+                            <div id="p2-progress" class="bg-pink-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Augments -->
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 flex-1 lg:flex-grow min-h-[60px] md:min-h-[120px]">
+                    <span class="text-[8px] md:text-[9px] text-slate-400 uppercase tracking-widest font-bold block mb-1">P2 AUGMENTS</span>
+                    <div id="p2-augments-list" class="flex flex-col gap-1 overflow-y-auto max-h-[60px] md:max-h-[160px]">
+                        <div class="text-[8px] md:text-[9px] text-slate-600 text-center py-2 md:py-4">증강 없음</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Canvas Box -->
+            <div class="flex-grow flex flex-col items-center justify-center w-full">
+                <div id="p2-wrapper" class="relative rounded-2xl overflow-hidden neon-border-magenta bg-slate-950 p-1 w-full max-w-[240px] md:max-w-[280px] aspect-[1/2] transition-all duration-300">
+                    <canvas id="p2-canvas" class="w-full h-full block rounded-xl relative z-10 bg-slate-950/90"></canvas>
+                </div>
+            </div>
+
+            <!-- Next box -->
+            <div class="lg:w-20 flex flex-row lg:flex-col gap-2 justify-center items-center lg:justify-start w-full lg:w-auto">
+                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-2 md:p-3 w-16 md:w-20">
+                    <span class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold block mb-1">NEXT</span>
+                    <div class="flex items-center justify-center h-12 md:h-16 bg-slate-900/40 border border-slate-900 rounded-lg overflow-hidden">
+                        <canvas id="p2-next" class="w-10 h-10 md:w-14 md:h-14 block"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MOBILE ADAPTIVE CONTROLS -->
+    <section class="max-w-7xl mx-auto w-full p-2 md:p-4 grid grid-cols-2 gap-3 lg:hidden">
+        <!-- P1 Controls Left -->
+        <div class="bg-slate-950/70 border border-cyan-950 p-2 md:p-3 rounded-xl flex flex-col gap-2">
+            <div class="text-[10px] text-cyan-400 font-bold font-orbitron mb-1 text-center">P1 CONTROLLER</div>
+            <div class="grid grid-cols-3 gap-1">
+                <button id="ctrl-p1-left" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-left"></i></button>
+                <button id="ctrl-p1-up" class="h-10 bg-cyan-900/20 border border-cyan-800/40 rounded-lg text-cyan-300 active:bg-cyan-800/50"><i class="fa-solid fa-rotate"></i></button>
+                <button id="ctrl-p1-right" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-right"></i></button>
+                <button id="ctrl-p1-hold" class="h-10 bg-slate-900 rounded-lg text-xs font-bold text-slate-400 active:bg-slate-800">HOLD</button>
+                <button id="ctrl-p1-down" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-down"></i></button>
+                <button id="ctrl-p1-drop" class="h-10 bg-cyan-900/20 border border-cyan-800/40 rounded-lg text-cyan-300 active:bg-cyan-800/50"><i class="fa-solid fa-angles-down"></i></button>
+            </div>
+        </div>
+
+        <!-- P2 Controls Right -->
+        <div class="bg-slate-950/70 border border-pink-950 p-3 rounded-xl flex flex-col gap-2">
+            <div class="text-[10px] text-pink-400 font-bold font-orbitron mb-1 text-center">P2 CONTROLLER</div>
+            <div class="grid grid-cols-3 gap-1">
+                <button id="ctrl-p2-left" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-left"></i></button>
+                <button id="ctrl-p2-up" class="h-10 bg-pink-900/20 border border-pink-800/40 rounded-lg text-pink-300 active:bg-pink-800/50"><i class="fa-solid fa-rotate"></i></button>
+                <button id="ctrl-p2-right" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-right"></i></button>
+                <button id="ctrl-p2-hold" class="h-10 bg-slate-900 rounded-lg text-xs font-bold text-slate-400 active:bg-slate-800">HOLD</button>
+                <button id="ctrl-p2-down" class="h-10 bg-slate-900 rounded-lg text-slate-300 active:bg-slate-800"><i class="fa-solid fa-arrow-down"></i></button>
+                <button id="ctrl-p2-drop" class="h-10 bg-pink-900/20 border border-pink-800/40 rounded-lg text-pink-300 active:bg-pink-800/50"><i class="fa-solid fa-angles-down"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- OVERLAY 1: DRAFT OVERLAY -->
+    <div id="screen-draft" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full text-center shadow-2xl relative">
+            <div class="w-14 h-14 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/30 mx-auto mb-3 animate-pulse">
+                <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 text-2xl"></i>
+            </div>
+            <h2 id="draft-title" class="text-2xl font-black font-orbitron mb-1 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">
+                P1 증강 선택
+            </h2>
+            <p class="text-xs text-slate-400 mb-6">나에게 특별한 능력을 선사할 사기적인 기지를 선택하세요!</p>
+            
+            <div id="draft-cards-container" class="flex flex-col gap-3">
+                <!-- Dynamic cards template created in JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY 2: GAME OVER WINNER BANNER -->
+    <div id="screen-gameover" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mx-auto mb-4">
+                <i class="fa-solid fa-trophy text-yellow-500 text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-black font-orbitron text-white mb-1">대결 종료!</h2>
+            <div id="gameover-winner-text" class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-4">
+                PLAYER 1 승리!
+            </div>
+            
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-around mb-6 text-sm">
+                <div>
+                    <div class="text-[10px] text-slate-500 uppercase">P1 공격라인수</div>
+                    <div id="final-p1-score" class="text-xl font-bold font-orbitron text-cyan-400">0</div>
+                </div>
+                <div class="border-l border-slate-800 h-10 my-auto"></div>
+                <div>
+                    <div class="text-[10px] text-slate-500 uppercase">P2 공격라인수</div>
+                    <div id="final-p2-score" class="text-xl font-bold font-orbitron text-pink-400">0</div>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-pink-500 hover:brightness-110 text-white font-extrabold text-sm tracking-wider transition duration-200">
+                새로운 대결 시작
+            </button>
+        </div>
+    </div>
+
+    <!-- OVERLAY 3: MAN MANUAL DIALOGUE -->
+    <div id="modal-guide" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full relative">
+            <button id="btn-close-modal" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-400 mb-4 border-b border-slate-800 pb-2">
+                플레이어 조작키 설명 (1인용 기기 분할용)
+            </h3>
+            
+            <div class="grid grid-cols-2 gap-4 text-xs">
+                <!-- P1 keys -->
+                <div class="bg-slate-950 p-3 rounded-xl border border-cyan-950/60">
+                    <h4 class="font-bold text-cyan-400 border-b border-cyan-950 pb-1 mb-2">PLAYER 1 (왼쪽)</h4>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><span class="text-white font-semibold">A / D</span>: 좌우 이동</li>
+                        <li><span class="text-white font-semibold">S</span>: 부드러운 하강</li>
+                        <li><span class="text-white font-semibold">W</span>: 시계 회전</li>
+                        <li><span class="text-white font-semibold">Q</span>: 반시계 회전</li>
+                        <li><span class="text-white font-semibold">Space</span>: 하드 드롭</li>
+                        <li><span class="text-white font-semibold">E</span>: HOLD / 홀드 교체</li>
+                    </ul>
+                </div>
+                <!-- P2 keys -->
+                <div class="bg-slate-950 p-3 rounded-xl border border-pink-950/60">
+                    <h4 class="font-bold text-pink-400 border-b border-pink-950 pb-1 mb-2">PLAYER 2 (오른쪽)</h4>
+                    <ul class="space-y-1 text-slate-400">
+                        <li><span class="text-white font-semibold">← / →</span>: 좌우 이동</li>
+                        <li><span class="text-white font-semibold">↓</span>: 부드러운 하강</li>
+                        <li><span class="text-white font-semibold">↑</span>: 시계 회전</li>
+                        <li><span class="text-white font-semibold">. (마침표)</span>: 반시계 회전</li>
+                        <li><span class="text-white font-semibold">Enter</span>: 하드 드롭</li>
+                        <li><span class="text-white font-semibold">/ (슬래시)</span>: HOLD / 홀드 교체</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-400 leading-normal">
+                💡 <span class="text-indigo-400 font-bold">증강 룰:</span> 3라인을 클리어할 때마다 레벨업처럼 대전이 일시정지 되며 무작위 능력이 생성됩니다. <span class="text-yellow-400">거울 방패</span>를 획득하면 상대 공격을 그대로 적에게 다시 되돌려 보낼 수도 있으니 상황을 역전해 보세요!
+            </div>
+            
+            <button id="btn-guide-confirm" class="w-full mt-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold transition">
+                대전으로 가기
+            </button>
+        </div>
+    </div>
+
+    <!-- OVERLAY 4: AUGMENTS ENCYCLOPEDIA MODAL -->
+    <div id="modal-augments" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-2xl w-full max-h-[85vh] flex flex-col relative">
+            <button id="btn-close-augments" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-300 to-orange-400 mb-1 border-b border-slate-800 pb-2">
+                📖 증강 백과사전 (Augment Strategy Guide)
+            </h3>
+            <p class="text-[10px] text-slate-400 mb-4">각 등급별 능력을 외우고 상대방보다 사기적인 시너지 조합을 먼저 완성해보세요!</p>
+            
+            <div class="flex-grow overflow-y-auto space-y-3.5 pr-1 text-xs">
+                <!-- GOLD Tier Group -->
+                <div>
+                    <h4 class="text-xs font-bold text-amber-400 border-b border-amber-950/50 pb-1 mb-2 flex items-center gap-1.5 font-orbitron">
+                        <i class="fa-solid fa-crown"></i> GOLD TIERS (승리의 열쇠, 게임 체인저)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- 거울 방패 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-amber-600/10 border border-amber-500/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-shield-halved text-amber-400"></i> 거울 방패
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">상대방 쓰레기 공격을 35% 확률로 아예 무효화하고 즉시 반사합니다.</p>
+                            <div class="mt-2 flex flex-wrap gap-1 text-[9px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold">🧠 암기: "받사! 35% 즉시역공"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 수비형 역전 빌드의 핵심</span>
+                            </div>
+                        </div>
+                        <!-- 미다스의 공포 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-amber-600/10 border border-amber-500/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-skull text-amber-400"></i> 미다스의 공포
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">라인을 지워 상대에게 보내는 공격 줄 수가 항시 +1 보너스 추가됩니다.</p>
+                            <div class="mt-2 flex flex-wrap gap-1 text-[9px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold">🧠 암기: "공격할때 무조건 +1줄"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 지우기 쉬운 연사 빌드와 극강</span>
+                            </div>
+                        </div>
+                        <!-- 나노 블록 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-amber-600/10 border border-amber-500/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-microchip text-amber-400"></i> 나노 블록
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">15% 확률로 1칸짜리 점 또는 2칸짜리 초미세 사기 블록이 대기열에 등장합니다.</p>
+                            <div class="mt-2 flex flex-wrap gap-1 text-[9px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold">🧠 암기: "구멍 땜빵용 미세블록"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 쓰레기줄 구멍을 귀신같이 메움</span>
+                            </div>
+                        </div>
+                        <!-- 최후의 비상보호막 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-amber-600/10 border border-amber-500/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-heart text-amber-400"></i> 비상 보호막
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">블록이 맨 위로 꽉 차서 죽기 직전, 하단 6줄을 시원하게 즉시 파괴해 생존시킵니다.</p>
+                            <div class="mt-2 flex flex-wrap gap-1 text-[9px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold">🧠 암기: "목숨 코인 +1 (일회용)"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 배째라식 공격 플레이 시 보험용</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SILVER Tier Group -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-300 border-b border-slate-800 pb-1 mb-2 flex items-center gap-1.5 font-orbitron">
+                        <i class="fa-solid fa-award"></i> SILVER TIERS (특수 전술 및 파괴력)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <!-- 지진 충격파 -->
+                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-850">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-water text-slate-400"></i> 지진 충격파
+                            </div>
+                            <p class="text-[9px] text-slate-400 mt-1 leading-normal">하드 드롭 시 공중에 떠 있는 블록을 아래로 강제 정렬시킵니다.</p>
+                            <div class="mt-2 flex flex-col gap-1 text-[8px]">
+                                <span class="px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold">🧠 "스페이스바 = 빈칸압축"</span>
+                            </div>
+                        </div>
+                        <!-- 콤보 폭격기 -->
+                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-850">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-fire text-slate-400"></i> 콤보 폭격기
+                            </div>
+                            <p class="text-[9px] text-slate-400 mt-1 leading-normal">연속으로 라인을 지우는 콤보 발생 시, 매 콤보마다 추가로 1줄씩 공격을 얹습니다.</p>
+                            <div class="mt-2 flex flex-col gap-1 text-[8px]">
+                                <span class="px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold">🧠 "콤보 이어질때 추가 폭탄"</span>
+                            </div>
+                        </div>
+                        <!-- 화약 전문가 -->
+                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-850">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-bomb text-slate-400"></i> 화약 전문가
+                            </div>
+                            <p class="text-[9px] text-slate-400 mt-1 leading-normal">5번째 낙하하는 블록이 착지하면 주변 3x3 격자를 완전히 자가 폭파시킵니다.</p>
+                            <div class="mt-2 flex flex-col gap-1 text-[8px]">
+                                <span class="px-1 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold">🧠 "5번째 마다 핑크폭탄 착지"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BRONZE Tier Group -->
+                <div>
+                    <h4 class="text-xs font-bold text-amber-700 border-b border-amber-950 pb-1 mb-2 flex items-center gap-1.5 font-orbitron">
+                        <i class="fa-solid fa-medal"></i> BRONZE TIERS (패시브 및 비상 변수)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- 일자형의 축복 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-900/5 to-amber-950/10 border border-amber-900/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-arrows-up-down text-amber-700"></i> 일자형의 축복
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">구원자 일자 블록(I-Tetrimino)의 출현 빈도가 50% 가량 수직 상승합니다.</p>
+                            <div class="mt-1.5 flex gap-1 text-[8px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-900/10 text-amber-500 font-bold">🧠 "일자막대 50% 폭증"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 4줄 제거 극대화</span>
+                            </div>
+                        </div>
+                        <!-- 차원 변환기 -->
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-amber-900/5 to-amber-950/10 border border-amber-900/20">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                <i class="fa-solid fa-arrows-spin text-amber-700"></i> 차원 변환기
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">블록이 이미 교체되어 막혔거나 없을 때도, 강제로 새로운 무작위 기물로 강제 변환합니다. (쿨타임 10초)</p>
+                            <div class="mt-1.5 flex gap-1 text-[8px]">
+                                <span class="px-1.5 py-0.5 rounded bg-amber-900/10 text-amber-500 font-bold">🧠 "망한 블록 리롤(Reroll) 가능"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400">💡 팁: 쿨마다 쓰면 기물 최적화 가능</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-augments-confirm" class="w-full mt-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white transition">
+                백과사전 덮기 (게임 재개)
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert / notification toast -->
+    <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950/40 py-3 text-center mt-auto">
+        <p class="text-[11px] text-slate-600 font-orbitron">AUGMENTED TETRIS VERSUS SYSTEM © 2026</p>
+    </footer>
+
+    <script>
+        const COLS = 10;
+        const ROWS = 20;
+
+        const SHAPES = {
+            'I': [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]],
+            'J': [[1,0,0], [1,1,1], [0,0,0]],
+            'L': [[0,0,1], [1,1,1], [0,0,0]],
+            'O': [[1,1], [1,1]],
+            'S': [[0,1,1], [1,1,0], [0,0,0]],
+            'T': [[0,1,0], [1,1,1], [0,0,0]],
+            'Z': [[1,1,0], [0,1,1], [0,0,0]]
+        };
+
+        const COLORS = {
+            'I': '#06b6d4', // Cyan
+            'J': '#3b82f6', // Blue
+            'L': '#f97316', // Orange
+            'O': '#eab308', // Yellow
+            'S': '#22c55e', // Green
+            'T': '#a855f7', // Purple
+            'Z': '#ef4444', // Red
+            'GARBAGE': '#4b5563', // Grey
+            'BOMB': '#ec4899', // Pink
+            'NANO1': '#10b981', // Emerald Dot
+            'NANO2': '#f43f5e'  // Rose Nano
+        };
+
+        // Complete Competitive Augment Database
+        const AUGMENTS_POOL = [
+            {
+                id: 'midas',
+                name: '미다스의 공포',
+                desc: '공격력 추가: 라인을 제거하여 공격을 보낼 때 상대방에게 추가로 1줄 더 공격을 가합니다.',
+                tier: 'gold',
+                icon: 'fa-skull',
+                color: 'text-amber-400'
+            },
+            {
+                id: 'reflector',
+                name: '거울 방패',
+                desc: '방어 시스템: 상대방으로부터 유입되는 쓰레기 기물을 35% 확률로 상쇄하고 역으로 그대로 돌려보냅니다.',
+                tier: 'gold',
+                icon: 'fa-shield-halved',
+                color: 'text-amber-400'
+            },
+            {
+                id: 'demo',
+                name: '화약 전문가',
+                desc: '폭발물 제어: 5번째 블록이 안전지에 착지할 때, 주변 3x3 격자를 완전히 파괴하는 핑크색 폭탄 블록으로 낙하합니다.',
+                tier: 'silver',
+                icon: 'fa-bomb',
+                color: 'text-slate-300'
+            },
+            {
+                id: 'nano',
+                name: '나노 블록',
+                desc: '작은 구멍 대응: 15% 확률로 1칸짜리 점 또는 2칸짜리 초소형 블록이 스폰되어 최고의 해결사가 되어줍니다.',
+                tier: 'gold',
+                icon: 'fa-microchip',
+                color: 'text-amber-400'
+            },
+            {
+                id: 'seismic',
+                name: '지진 충격파',
+                desc: '하드 드롭 시 공중에 붕 떠서 비어있는 구멍들을 완전히 아래로 쏠려 내려가 정렬해 줍니다.',
+                tier: 'silver',
+                icon: 'fa-water',
+                color: 'text-slate-300'
+            },
+            {
+                id: 'blessing_i',
+                name: '일자형의 축복',
+                desc: '기물 가속: 일자형 테트리미노(I) 기물의 등장 빈도가 50% 폭증합니다.',
+                tier: 'bronze',
+                icon: 'fa-arrows-up-down',
+                color: 'text-amber-700'
+            },
+            {
+                id: 'safety',
+                name: '최후의 비상보호막',
+                desc: '최종 생존: 게임오버의 한계치에 몰렸을 때 단 1회 하단의 6줄을 제거하여 복원합니다.',
+                tier: 'gold',
+                icon: 'fa-heart',
+                color: 'text-amber-400'
+            },
+            {
+                id: 'combo',
+                name: '콤보 폭격기',
+                desc: '연쇄 공격: 라인을 연달아 지워서 콤보를 유도할 때마다 쓰레기 줄을 1줄씩 가중해서 추가 전송합니다.',
+                tier: 'silver',
+                icon: 'fa-fire',
+                color: 'text-slate-300'
+            },
+            {
+                id: 'warp',
+                name: '차원 변환기',
+                desc: '비상 탈출: 홀드 키 입력 시 홀드된 기물이 없거나 교체 불가능할 때 강제로 현재 기물을 새로운 무작위 기물로 교환시킵니다. (쿨다운 10초)',
+                tier: 'bronze',
+                icon: 'fa-arrows-spin',
+                color: 'text-amber-700'
+            }
+        ];
+
+        // Create dual state managers
+        class PlayerState {
+            constructor(id, canvasId, nextId, holdId, progressId, linesId, scoreId, augmentsListId, wrapperId) {
+                this.id = id;
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.nextCanvas = document.getElementById(nextId);
+                this.nextCtx = this.nextCanvas.getContext('2d');
+                this.holdCanvas = document.getElementById(holdId);
+                this.holdCtx = this.holdCanvas.getContext('2d');
+                
+                this.dom = {
+                    progress: document.getElementById(progressId),
+                    lines: document.getElementById(linesId),
+                    score: document.getElementById(scoreId),
+                    augmentsList: document.getElementById(augmentsListId),
+                    wrapper: document.getElementById(wrapperId)
+                };
+
+                this.board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+                this.score = 0; // Tracks attack lines sent
+                this.linesCleared = 0;
+                this.linesSinceAugment = 0;
+                this.comboCount = 0;
+
+                this.currentPiece = null;
+                this.nextPiece = null;
+                this.holdPiece = null;
+                this.canHold = true;
+                this.pieceCount = 0;
+                this.activeAugments = [];
+                this.warpCooldown = false;
+                this.safetyUsed = false;
+            }
+
+            reset() {
+                this.board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+                this.score = 0;
+                this.linesCleared = 0;
+                this.linesSinceAugment = 0;
+                this.comboCount = 0;
+                this.currentPiece = null;
+                this.nextPiece = null;
+                this.holdPiece = null;
+                this.canHold = true;
+                this.pieceCount = 0;
+                this.activeAugments = [];
+                this.warpCooldown = false;
+                this.safetyUsed = false;
+            }
+        }
+
+        const p1 = new PlayerState('1', 'p1-canvas', 'p1-next', 'p1-hold', 'p1-progress', 'p1-lines', 'p1-score', 'p1-augments-list', 'p1-wrapper');
+        const p2 = new PlayerState('2', 'p2-canvas', 'p2-next', 'p2-hold', 'p2-progress', 'p2-lines', 'p2-score', 'p2-augments-list', 'p2-wrapper');
+
+        let gameStatus = 'idle'; // 'idle', 'playing', 'paused', 'augment', 'gameover'
+        let matchStartTime = 0;
+        let matchDuration = 0;
+        let timerInterval = null;
+        let globalLoopId = null;
+
+        let p1DropCounter = 0;
+        let p2DropCounter = 0;
+        let dropInterval = 1000; // Shared baseline speed, gets slightly faster over time
+        let lastTime = 0;
+
+        // Resize Canvas dynamically
+        function resizePlayerCanvas(player) {
+            const width = player.canvas.parentElement.clientWidth;
+            player.canvas.width = width - 8;
+            player.canvas.height = player.canvas.width * 2;
+        }
+
+        function resizeAll() {
+            resizePlayerCanvas(p1);
+            resizePlayerCanvas(p2);
+        }
+        window.addEventListener('resize', resizeAll);
+        resizeAll();
+
+        class Piece {
+            constructor(matrix, type) {
+                // 원본 SHAPES 배열의 주소 공유 문제를 해결하기 위해 2차원 배열 깊은 복사(Deep Copy)를 수행합니다.
+                this.matrix = matrix.map(row => [...row]);
+                this.type = type;
+                this.x = Math.floor((COLS - this.matrix[0].length) / 2);
+                this.y = 0;
+                this.isBomb = false;
+            }
+        }
+
+        function getPieceForPlayer(player) {
+            // Check nano blocks augment
+            const hasNano = player.activeAugments.some(a => a.id === 'nano');
+            if (hasNano && Math.random() < 0.15) {
+                const isSingle = Math.random() < 0.6;
+                const matrix = isSingle ? [[1]] : [[1, 1]];
+                return new Piece(matrix, isSingle ? 'NANO1' : 'NANO2');
+            }
+
+            let pool = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
+            const hasBlessing = player.activeAugments.some(a => a.id === 'blessing_i');
+            if (hasBlessing) {
+                pool.push('I', 'I', 'I');
+            }
+
+            const type = pool[Math.floor(Math.random() * pool.length)];
+            const piece = new Piece(SHAPES[type], type);
+
+            // Check demo bomb block
+            const hasDemo = player.activeAugments.some(a => a.id === 'demo');
+            if (hasDemo) {
+                player.pieceCount++;
+                if (player.pieceCount % 5 === 0) {
+                    piece.isBomb = true;
+                }
+            }
+
+            return piece;
+        }
+
+        // Handle collision
+        function collide(board, piece) {
+            const [m, o] = [piece.matrix, {x: piece.x, y: piece.y}];
+            for (let r = 0; r < m.length; ++r) {
+                for (let c = 0; c < m[r].length; ++c) {
+                    if (m[r][c] !== 0 &&
+                       (board[r + o.y] === undefined ||
+                        board[r + o.y][c + o.x] === undefined ||
+                        board[r + o.y][c + o.x] !== 0)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Merge piece
+        function merge(board, piece) {
+            piece.matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        board[r + piece.y][c + piece.x] = piece.isBomb ? 'BOMB' : piece.type;
+                    }
+                });
+            });
+        }
+
+        // Send garbage lines with a hole
+        function sendGarbage(sender, lines) {
+            const target = sender.id === '1' ? p2 : p1;
+            
+            // Check Mirror Shield Augment
+            const hasShield = target.activeAugments.some(a => a.id === 'reflector');
+            if (hasShield && Math.random() < 0.35) {
+                createToast(`🛡️ PLAYER ${target.id}가 공격을 반사했습니다!`, target.id === '1' ? 'border-cyan-500 text-cyan-400' : 'border-pink-500 text-pink-400');
+                applyGarbage(sender, lines);
+                return;
+            }
+
+            applyGarbage(target, lines);
+        }
+
+        function applyGarbage(target, count) {
+            if (count <= 0) return;
+
+            // Shift current board rows up
+            for (let r = 0; r < ROWS - count; r++) {
+                target.board[r] = [...target.board[r + count]];
+            }
+
+            // Fill empty bottom lines
+            const holeCol = Math.floor(Math.random() * COLS);
+            for (let r = ROWS - count; r < ROWS; r++) {
+                target.board[r] = Array(COLS).fill('GARBAGE');
+                target.board[r][holeCol] = 0;
+            }
+
+            // Shake screen feedback
+            const wrapper = target.dom.wrapper;
+            wrapper.classList.add(target.id === '1' ? 'shake-p1' : 'shake-p2');
+            setTimeout(() => {
+                wrapper.classList.remove('shake-p1', 'shake-p2');
+            }, 250);
+
+            createToast(`⚠️ PLAYER ${target.id}에게 ${count}줄 공격 전송!`, target.id === '1' ? 'border-cyan-500 text-cyan-400' : 'border-pink-500 text-pink-400');
+        }
+
+        // Explosive destruction
+        function triggerBombBlast(player, cx, cy) {
+            createToast(`💥 P${player.id} 화약 전문가 폭발!`, 'border-pink-500 text-pink-400');
+            for (let r = cy - 1; r <= cy + 1; r++) {
+                for (let c = cx - 1; c <= cx + 1; c++) {
+                    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                        player.board[r][c] = 0;
+                    }
+                }
+            }
+        }
+
+        // Gravity pull for Seismic Waves
+        function applySeismicWave(player) {
+            for (let c = 0; c < COLS; c++) {
+                let columnBlocks = [];
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (player.board[r][c] !== 0) {
+                        columnBlocks.push(player.board[r][c]);
+                    }
+                }
+                while (columnBlocks.length < ROWS) {
+                    columnBlocks.push(0);
+                }
+                columnBlocks.reverse();
+                for (let r = 0; r < ROWS; r++) {
+                    player.board[r][c] = columnBlocks[r];
+                }
+            }
+            createToast(`🌊 P${player.id} 지진 충격파 작동!`, 'border-indigo-400 text-indigo-400');
+        }
+
+        // Safety Net rescue function
+        function triggerSafetyRescue(player) {
+            player.safetyUsed = true;
+            // Clear bottom 6 lines
+            for (let r = ROWS - 6; r < ROWS; r++) {
+                player.board[r].fill(0);
+            }
+            applySeismicWave(player);
+            createToast(`🛡️ P${player.id} 최후의 비상보호막 작동! 기사회생!`, 'border-yellow-400 text-yellow-400 font-bold');
+        }
+
+        // Sweep lines
+        function arenaSweep(player) {
+            let rowCount = 0;
+            outer: for (let r = ROWS - 1; r >= 0; --r) {
+                for (let c = 0; c < player.board[r].length; ++c) {
+                    if (player.board[r][c] === 0) {
+                        continue outer;
+                    }
+                }
+                const row = player.board.splice(r, 1)[0].fill(0);
+                player.board.unshift(row);
+                ++r;
+                rowCount++;
+            }
+
+            if (rowCount > 0) {
+                player.linesCleared += rowCount;
+                player.linesSinceAugment += rowCount;
+                
+                // Attack lines logic
+                let attackLines = 0;
+                if (rowCount === 2) attackLines = 1;
+                else if (rowCount === 3) attackLines = 2;
+                else if (rowCount >= 4) attackLines = 4;
+
+                // Midas Touch
+                const hasMidas = player.activeAugments.some(a => a.id === 'midas');
+                if (hasMidas && attackLines > 0) {
+                    attackLines += 1;
+                }
+
+                // Combo Bomber
+                const hasCombo = player.activeAugments.some(a => a.id === 'combo');
+                if (hasCombo) {
+                    player.comboCount++;
+                    if (player.comboCount > 1) {
+                        attackLines += 1;
+                        createToast(`🔥 P${player.id} 콤보 폭격! +1 공격가중`, 'border-amber-500 text-amber-500');
+                    }
+                } else {
+                    player.comboCount = 1;
+                }
+
+                if (attackLines > 0) {
+                    player.score += attackLines;
+                    sendGarbage(player, attackLines);
+                }
+
+                // Evaluate Augments
+                if (player.linesSinceAugment >= 3) {
+                    player.linesSinceAugment -= 3;
+                    setTimeout(() => {
+                        triggerDraftSelection(player);
+                    }, 250);
+                }
+
+                updatePlayerDashboard(player);
+            } else {
+                player.comboCount = 0;
+            }
+        }
+
+        // Players actions
+        function movePlayer(player, dir) {
+            player.currentPiece.x += dir;
+            if (collide(player.board, player.currentPiece)) {
+                player.currentPiece.x -= dir;
+            }
+        }
+
+        function dropPlayer(player) {
+            player.currentPiece.y++;
+            if (collide(player.board, player.currentPiece)) {
+                player.currentPiece.y--;
+                lockPlayerPiece(player);
+            }
+        }
+
+        function hardDropPlayer(player) {
+            let count = 0;
+            while (!collide(player.board, player.currentPiece)) {
+                player.currentPiece.y++;
+                count++;
+            }
+            player.currentPiece.y--;
+
+            const hasSeismic = player.activeAugments.some(a => a.id === 'seismic');
+            if (hasSeismic && count > 0) {
+                setTimeout(() => { applySeismicWave(player); }, 40);
+            }
+
+            lockPlayerPiece(player);
+        }
+
+        function rotatePlayer(player, dir) {
+            const originalX = player.currentPiece.x;
+            let offset = 1;
+            rotateMatrix(player.currentPiece.matrix, dir);
+            while (collide(player.board, player.currentPiece)) {
+                player.currentPiece.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.currentPiece.matrix[0].length) {
+                    rotateMatrix(player.currentPiece.matrix, -dir);
+                    player.currentPiece.x = originalX;
+                    return;
+                }
+            }
+        }
+
+        function rotateMatrix(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+                }
+            }
+            if (dir > 0) {
+                matrix.forEach(row => row.reverse());
+            } else {
+                matrix.reverse();
+            }
+        }
+
+        function holdPlayerPiece(player) {
+            if (!player.canHold) return;
+
+            if (player.holdPiece === null) {
+                player.holdPiece = new Piece(SHAPES[player.currentPiece.type], player.currentPiece.type);
+                respawnPlayerPiece(player);
+            } else {
+                const temp = player.holdPiece;
+                player.holdPiece = new Piece(SHAPES[player.currentPiece.type], player.currentPiece.type);
+                player.currentPiece = temp;
+                player.currentPiece.x = Math.floor((COLS - player.currentPiece.matrix[0].length) / 2);
+                player.currentPiece.y = 0;
+            }
+            player.canHold = false;
+            drawHoldPanel(player);
+        }
+
+        function triggerDimensionWarp(player) {
+            if (player.warpCooldown) return;
+            const oldType = player.currentPiece.type;
+            let piece = getPieceForPlayer(player);
+            while (piece.type === oldType) {
+                piece = getPieceForPlayer(player);
+            }
+            player.currentPiece = piece;
+            player.warpCooldown = true;
+            createToast(`🌀 P${player.id} 차원 기물 교체!`, 'border-indigo-400 text-indigo-400');
+            setTimeout(() => {
+                player.warpCooldown = false;
+            }, 10000);
+        }
+
+        function lockPlayerPiece(player) {
+            merge(player.board, player.currentPiece);
+
+            if (player.currentPiece.isBomb) {
+                const cx = player.currentPiece.x + Math.floor(player.currentPiece.matrix[0].length / 2);
+                const cy = player.currentPiece.y + Math.floor(player.currentPiece.matrix.length / 2);
+                triggerBombBlast(player, cx, cy);
+            }
+
+            respawnPlayerPiece(player);
+            arenaSweep(player);
+            player.canHold = true;
+        }
+
+        function respawnPlayerPiece(player) {
+            player.currentPiece = player.nextPiece || getPieceForPlayer(player);
+            player.nextPiece = getPieceForPlayer(player);
+            drawNextPanel(player);
+
+            if (collide(player.board, player.currentPiece)) {
+                const hasSafety = player.activeAugments.some(a => a.id === 'safety');
+                if (hasSafety && !player.safetyUsed) {
+                    triggerSafetyRescue(player);
+                    if (collide(player.board, player.currentPiece)) {
+                        triggerGameOver(player.id === '1' ? '2' : '1');
+                    }
+                } else {
+                    triggerGameOver(player.id === '1' ? '2' : '1');
+                }
+            }
+        }
+
+        // Canvas Rendering helpers
+        function drawCell(context, x, y, type, scale) {
+            context.save();
+            if (type === 'BOMB') {
+                const pulse = 1 + 0.08 * Math.sin(Date.now() / 120);
+                context.shadowColor = '#ec4899';
+                context.shadowBlur = 10;
+                context.fillStyle = '#ec4899';
+                context.fillRect(x * scale + 1.5, y * scale + 1.5, scale - 3, scale - 3);
+                context.fillStyle = '#ffffff';
+                context.beginPath();
+                context.arc((x + 0.5) * scale, (y + 0.5) * scale, (scale / 4) * pulse, 0, Math.PI * 2);
+                context.fill();
+            } else if (type === 'GARBAGE') {
+                context.fillStyle = '#374151'; // Slate grey brick look
+                context.fillRect(x * scale + 2, y * scale + 2, scale - 4, scale - 4);
+                context.strokeStyle = '#4b5563';
+                context.lineWidth = 1.5;
+                context.strokeRect(x * scale + 2, y * scale + 2, scale - 4, scale - 4);
+            } else {
+                const color = COLORS[type] || '#ffffff';
+                context.fillStyle = color;
+                context.shadowColor = color;
+                context.shadowBlur = 4;
+                context.fillRect(x * scale + 1.5, y * scale + 1.5, scale - 3, scale - 3);
+
+                context.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                context.fillRect(x * scale + 1.5, y * scale + 1.5, scale - 3, (scale - 3) / 2);
+            }
+            context.restore();
+        }
+
+        function drawGhostProjection(player) {
+            const ghost = {
+                matrix: player.currentPiece.matrix,
+                x: player.currentPiece.x,
+                y: player.currentPiece.y,
+                type: player.currentPiece.type
+            };
+
+            while (!collide(player.board, ghost)) {
+                ghost.y++;
+            }
+            ghost.y--;
+
+            const scaleX = player.canvas.width / COLS;
+            const scaleY = player.canvas.height / ROWS;
+
+            ghost.matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        player.ctx.save();
+                        player.ctx.globalAlpha = 0.18;
+                        player.ctx.strokeStyle = COLORS[ghost.type];
+                        player.ctx.lineWidth = 2;
+                        player.ctx.strokeRect((c + ghost.x) * scaleX + 2, (r + ghost.y) * scaleY + 2, scaleX - 4, scaleY - 4);
+                        player.ctx.restore();
+                    }
+                });
+            });
+        }
+
+        function drawPlayerBoard(player) {
+            player.ctx.fillStyle = '#020617';
+            player.ctx.fillRect(0, 0, player.canvas.width, player.canvas.height);
+
+            const scaleX = player.canvas.width / COLS;
+            const scaleY = player.canvas.height / ROWS;
+
+            // Draw grids
+            player.ctx.strokeStyle = 'rgba(15, 23, 42, 0.6)';
+            player.ctx.lineWidth = 1;
+            for (let i = 0; i <= COLS; i++) {
+                player.ctx.beginPath();
+                player.ctx.moveTo(i * scaleX, 0);
+                player.ctx.lineTo(i * scaleX, player.canvas.height);
+                player.ctx.stroke();
+            }
+            for (let j = 0; j <= ROWS; j++) {
+                player.ctx.beginPath();
+                player.ctx.moveTo(0, j * scaleY);
+                player.ctx.lineTo(player.canvas.width, j * scaleY);
+                player.ctx.stroke();
+            }
+
+            // Draw settled pieces
+            player.board.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        drawCell(player.ctx, c, r, value, scaleX);
+                    }
+                });
+            });
+
+            // Draw falling piece and its ghost helper
+            if (player.currentPiece) {
+                drawGhostProjection(player);
+                player.currentPiece.matrix.forEach((row, r) => {
+                    row.forEach((value, c) => {
+                        if (value !== 0) {
+                            drawCell(player.ctx, c + player.currentPiece.x, r + player.currentPiece.y, player.currentPiece.isBomb ? 'BOMB' : player.currentPiece.type, scaleX);
+                        }
+                    });
+                });
+            }
+        }
+
+        function drawNextPanel(player) {
+            player.nextCtx.clearRect(0, 0, player.nextCanvas.width, player.nextCanvas.height);
+            if (!player.nextPiece) return;
+
+            const scale = 14;
+            const size = player.nextPiece.matrix.length;
+            const offsetX = (player.nextCanvas.width - size * scale) / 2;
+            const offsetY = (player.nextCanvas.height - size * scale) / 2;
+
+            player.nextPiece.matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        drawCell(player.nextCtx, c, r, player.nextPiece.type, scale);
+                    }
+                });
+            });
+            player.nextCanvas.style.transform = `translate(${offsetX / 2}px, ${offsetY / 2}px)`;
+        }
+
+        function drawHoldPanel(player) {
+            player.holdCtx.clearRect(0, 0, player.holdCanvas.width, player.holdCanvas.height);
+            if (!player.holdPiece) return;
+
+            const scale = 14;
+            const size = player.holdPiece.matrix.length;
+            const offsetX = (player.holdCanvas.width - size * scale) / 2;
+            const offsetY = (player.holdCanvas.height - size * scale) / 2;
+
+            player.holdPiece.matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        drawCell(player.holdCtx, c, r, player.holdPiece.type, scale);
+                    }
+                });
+            });
+            player.holdCanvas.style.transform = `translate(${offsetX / 2}px, ${offsetY / 2}px)`;
+        }
+
+        // Updates HUD
+        function updatePlayerDashboard(player) {
+            player.dom.score.innerText = player.score;
+            player.dom.lines.innerText = `${player.linesSinceAugment} / 3`;
+            const percent = (player.linesSinceAugment / 3) * 100;
+            player.dom.progress.style.width = `${percent}%`;
+        }
+
+        function createToast(msg, borderClasses = 'border-slate-800 text-slate-200') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = `flex items-center gap-2 px-4 py-2 bg-slate-950/95 border rounded-xl text-xs font-semibold shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-none ${borderClasses}`;
+            el.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>${msg}</span>`;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.remove('translate-y-2', 'opacity-0');
+            }, 40);
+
+            setTimeout(() => {
+                el.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => el.remove(), 400);
+            }, 3000);
+        }
+
+        // Create draft cards
+        function triggerDraftSelection(player) {
+            gameStatus = 'augment';
+            if (globalLoopId) {
+                cancelAnimationFrame(globalLoopId);
+                globalLoopId = null;
+            }
+
+            document.getElementById('screen-draft').classList.remove('hidden');
+            const title = document.getElementById('draft-title');
+            title.innerText = `P${player.id} 증강 대기 카드 선택`;
+            title.className = `text-2xl font-black font-orbitron mb-1 text-transparent bg-clip-text ${player.id === '1' ? 'bg-gradient-to-r from-cyan-400 to-cyan-200' : 'bg-gradient-to-r from-pink-400 to-pink-200'}`;
+
+            // Create cards draft pool
+            const poolCopy = [...AUGMENTS_POOL];
+            const filteredPool = poolCopy.filter(aug => !player.activeAugments.some(active => active.id === aug.id));
+            const pool = filteredPool.length > 0 ? filteredPool : poolCopy;
+
+            const draftList = [];
+            while (draftList.length < Math.min(3, pool.length)) {
+                const randIdx = Math.floor(Math.random() * pool.length);
+                const item = pool[randIdx];
+                if (!draftList.includes(item)) {
+                    draftList.push(item);
+                }
+            }
+
+            const container = document.getElementById('draft-cards-container');
+            container.innerHTML = '';
+
+            draftList.forEach(aug => {
+                const el = document.createElement('div');
+                let cardClass = 'augment-card-bronze';
+                let tierLabel = 'BRONZE';
+                if (aug.tier === 'gold') {
+                    cardClass = 'augment-card-gold';
+                    tierLabel = 'GOLD';
+                } else if (aug.tier === 'silver') {
+                    cardClass = 'augment-card-silver';
+                    tierLabel = 'SILVER';
+                }
+
+                el.className = `p-4 rounded-2xl text-left cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:brightness-110 active:scale-95 flex items-start gap-3 relative ${cardClass}`;
+                el.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid ${aug.icon} ${aug.color} text-lg"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-white">${aug.name}</span>
+                            <span class="text-[9px] font-bold bg-slate-950/60 px-2 py-0.5 rounded text-slate-400">${tierLabel}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${aug.desc}</p>
+                    </div>
+                `;
+
+                el.addEventListener('click', () => {
+                    equipAugment(player, aug);
+                });
+
+                container.appendChild(el);
+            });
+        }
+
+        function equipAugment(player, aug) {
+            player.activeAugments.push(aug);
+            document.getElementById('screen-draft').classList.add('hidden');
+            createToast(`✨ P${player.id} [${aug.name}] 장착 완료!`, player.id === '1' ? 'border-cyan-500 text-cyan-400' : 'border-pink-500 text-pink-400');
+
+            updateAugmentListDOM(player);
+
+            // Resume loop
+            gameStatus = 'playing';
+            lastTime = performance.now();
+            if (globalLoopId) cancelAnimationFrame(globalLoopId);
+            globalLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateAugmentListDOM(player) {
+            const list = player.dom.augmentsList;
+            list.innerHTML = '';
+
+            player.activeAugments.forEach(aug => {
+                const el = document.createElement('div');
+                el.className = 'flex items-center gap-2 p-1.5 bg-slate-900/50 border border-slate-900 rounded-lg';
+                el.innerHTML = `
+                    <div class="w-5 h-5 rounded bg-slate-950 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid ${aug.icon} ${aug.color} text-[10px]"></i>
+                    </div>
+                    <div class="truncate">
+                        <div class="text-[10px] font-bold text-slate-300">${aug.name}</div>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        // Start match timers
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            matchStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                if (gameStatus !== 'playing') return;
+                matchDuration = Math.floor((Date.now() - matchStartTime) / 1000);
+                const mins = String(Math.floor(matchDuration / 60)).padStart(2, '0');
+                const secs = String(matchDuration % 60).padStart(2, '0');
+                document.getElementById('timer').innerText = `${mins}:${secs}`;
+
+                // Increase baseline falling speed by 2.5% every 30 seconds
+                if (matchDuration > 0 && matchDuration % 30 === 0) {
+                    dropInterval = Math.max(150, dropInterval * 0.955);
+                }
+            }, 1000);
+        }
+
+        function startGame() {
+            if (globalLoopId) {
+                cancelAnimationFrame(globalLoopId);
+                globalLoopId = null;
+            }
+
+            p1.reset();
+            p2.reset();
+
+            resizeAll();
+
+            p1.nextPiece = getPieceForPlayer(p1);
+            p2.nextPiece = getPieceForPlayer(p2);
+
+            respawnPlayerPiece(p1);
+            respawnPlayerPiece(p2);
+
+            updatePlayerDashboard(p1);
+            updatePlayerDashboard(p2);
+
+            updateAugmentListDOM(p1);
+            updateAugmentListDOM(p2);
+
+            document.getElementById('screen-start').style.display = 'none';
+            document.getElementById('screen-gameover').classList.add('hidden');
+            
+            document.getElementById('btn-pause').removeAttribute('disabled');
+            document.getElementById('btn-pause').innerHTML = `<i class="fa-solid fa-pause mr-1"></i> 대전 일시 정지`;
+
+            const banner = document.getElementById('vs-banner');
+            banner.innerHTML = `<span class="text-xs font-bold text-green-400 font-orbitron animate-pulse"><i class="fa-solid fa-circle mr-1"></i> BATTLE LIVE</span>`;
+
+            gameStatus = 'playing';
+            startTimer();
+            lastTime = performance.now();
+            globalLoopId = requestAnimationFrame(gameLoop);
+            createToast('⚔️ 테트리스 전장 개시! 준비 완료!', 'border-indigo-500 text-indigo-400 font-bold');
+        }
+
+        function triggerGameOver(winnerId) {
+            gameStatus = 'gameover';
+            if (globalLoopId) {
+                cancelAnimationFrame(globalLoopId);
+                globalLoopId = null;
+            }
+            if (timerInterval) clearInterval(timerInterval);
+
+            document.getElementById('screen-gameover').classList.remove('hidden');
+            document.getElementById('gameover-winner-text').innerText = `PLAYER ${winnerId} 승리!`;
+            document.getElementById('gameover-winner-text').className = `text-2xl font-black font-orbitron mb-4 text-transparent bg-clip-text ${winnerId === '1' ? 'bg-gradient-to-r from-cyan-400 to-indigo-400' : 'bg-gradient-to-r from-pink-400 to-indigo-400'}`;
+            
+            document.getElementById('final-p1-score').innerText = p1.score;
+            document.getElementById('final-p2-score').innerText = p2.score;
+        }
+
+        function togglePause() {
+            if (gameStatus === 'playing') {
+                gameStatus = 'paused';
+                if (globalLoopId) {
+                    cancelAnimationFrame(globalLoopId);
+                    globalLoopId = null;
+                }
+                document.getElementById('btn-pause').innerHTML = `<i class="fa-solid fa-play mr-1"></i> 대전 재개하기`;
+                createToast('⏸️ 대전이 일시 중지되었습니다.', 'border-slate-700 text-slate-400');
+            } else if (gameStatus === 'paused') {
+                gameStatus = 'playing';
+                document.getElementById('btn-pause').innerHTML = `<i class="fa-solid fa-pause mr-1"></i> 대전 일시 정지`;
+                lastTime = performance.now();
+                if (globalLoopId) cancelAnimationFrame(globalLoopId);
+                globalLoopId = requestAnimationFrame(gameLoop);
+                createToast('▶️ 대전이 다시 시작되었습니다.', 'border-green-500 text-green-400');
+            }
+        }
+
+        // Shared loop ticks
+        function gameLoop(time = 0) {
+            if (gameStatus !== 'playing') return;
+
+            const delta = time - lastTime;
+            lastTime = time;
+
+            p1DropCounter += delta;
+            p2DropCounter += delta;
+
+            if (p1DropCounter > dropInterval) {
+                dropPlayer(p1);
+                p1DropCounter = 0;
+            }
+            if (p2DropCounter > dropInterval) {
+                dropPlayer(p2);
+                p2DropCounter = 0;
+            }
+
+            drawPlayerBoard(p1);
+            drawPlayerBoard(p2);
+
+            globalLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // KEYBOARD BINDINGS
+        window.addEventListener('keydown', event => {
+            if (gameStatus !== 'playing') return;
+
+            // Prevent scroll behaviors for keys used
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(event.code)) {
+                event.preventDefault();
+            }
+
+            switch (event.code) {
+                // PLAYER 1 KEYS
+                case 'KeyA':
+                    movePlayer(p1, -1);
+                    break;
+                case 'KeyD':
+                    movePlayer(p1, 1);
+                    break;
+                case 'KeyS':
+                    dropPlayer(p1);
+                    break;
+                case 'KeyW':
+                    rotatePlayer(p1, 1); // CW
+                    break;
+                case 'KeyQ':
+                    rotatePlayer(p1, -1); // CCW
+                    break;
+                case 'Space':
+                    hardDropPlayer(p1);
+                    break;
+                case 'KeyE':
+                    const hasWarp1 = p1.activeAugments.some(a => a.id === 'warp');
+                    if (hasWarp1 && !p1.canHold) {
+                        triggerDimensionWarp(p1);
+                    } else {
+                        holdPlayerPiece(p1);
+                    }
+                    break;
+
+                // PLAYER 2 KEYS
+                case 'ArrowLeft':
+                    movePlayer(p2, -1);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(p2, 1);
+                    break;
+                case 'ArrowDown':
+                    dropPlayer(p2);
+                    break;
+                case 'ArrowUp':
+                    rotatePlayer(p2, 1); // CW
+                    break;
+                case 'Period':
+                    rotatePlayer(p2, -1); // CCW
+                    break;
+                case 'Enter':
+                    hardDropPlayer(p2);
+                    break;
+                case 'Slash':
+                    const hasWarp2 = p2.activeAugments.some(a => a.id === 'warp');
+                    if (hasWarp2 && !p2.canHold) {
+                        triggerDimensionWarp(p2);
+                    } else {
+                        holdPlayerPiece(p2);
+                    }
+                    break;
+            }
+
+            drawPlayerBoard(p1);
+            drawPlayerBoard(p2);
+        });
+
+        // Button actions
+        document.getElementById('btn-start').addEventListener('click', startGame);
+        document.getElementById('btn-pause').addEventListener('click', togglePause);
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            startGame();
+            createToast('🔄 대전 보드가 초기화되었습니다!', 'border-yellow-400 text-yellow-400');
+        });
+        document.getElementById('btn-restart').addEventListener('click', startGame);
+
+        // Mobile Visual Controls triggers
+        // P1 Touch pad
+        document.getElementById('ctrl-p1-left').addEventListener('click', () => { movePlayer(p1, -1); drawPlayerBoard(p1); });
+        document.getElementById('ctrl-p1-right').addEventListener('click', () => { movePlayer(p1, 1); drawPlayerBoard(p1); });
+        document.getElementById('ctrl-p1-up').addEventListener('click', () => { rotatePlayer(p1, 1); drawPlayerBoard(p1); });
+        document.getElementById('ctrl-p1-down').addEventListener('click', () => { dropPlayer(p1); drawPlayerBoard(p1); });
+        document.getElementById('ctrl-p1-drop').addEventListener('click', () => { hardDropPlayer(p1); drawPlayerBoard(p1); });
+        document.getElementById('ctrl-p1-hold').addEventListener('click', () => {
+            const hasWarp = p1.activeAugments.some(a => a.id === 'warp');
+            if (hasWarp && !p1.canHold) triggerDimensionWarp(p1);
+            else holdPlayerPiece(p1);
+            drawPlayerBoard(p1);
+        });
+
+        // P2 Touch pad
+        document.getElementById('ctrl-p2-left').addEventListener('click', () => { movePlayer(p2, -1); drawPlayerBoard(p2); });
+        document.getElementById('ctrl-p2-right').addEventListener('click', () => { movePlayer(p2, 1); drawPlayerBoard(p2); });
+        document.getElementById('ctrl-p2-up').addEventListener('click', () => { rotatePlayer(p2, 1); drawPlayerBoard(p2); });
+        document.getElementById('ctrl-p2-down').addEventListener('click', () => { dropPlayer(p2); drawPlayerBoard(p2); });
+        document.getElementById('ctrl-p2-drop').addEventListener('click', () => { hardDropPlayer(p2); drawPlayerBoard(p2); });
+        document.getElementById('ctrl-p2-hold').addEventListener('click', () => {
+            const hasWarp = p2.activeAugments.some(a => a.id === 'warp');
+            if (hasWarp && !p2.canHold) triggerDimensionWarp(p2);
+            else holdPlayerPiece(p2);
+            drawPlayerBoard(p2);
+        });
+
+        // Dialog manual modals handlers
+        const modal = document.getElementById('modal-guide');
+        document.getElementById('btn-how-to').addEventListener('click', () => modal.classList.remove('hidden'));
+        document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('btn-guide-confirm').addEventListener('click', () => modal.classList.add('hidden'));
+
+        const modalAugments = document.getElementById('modal-augments');
+        document.getElementById('btn-show-augments').addEventListener('click', () => {
+            modalAugments.classList.remove('hidden');
+            if (gameStatus === 'playing') {
+                togglePause(); // Automatically pause the match so players can read comfortably
+            }
+        });
+        
+        function closeEncyclopedia() {
+            modalAugments.classList.add('hidden');
+            if (gameStatus === 'paused') {
+                togglePause(); // Automatically resume the match when closed
+            }
+        }
+        document.getElementById('btn-close-augments').addEventListener('click', closeEncyclopedia);
+        document.getElementById('btn-augments-confirm').addEventListener('click', closeEncyclopedia);
+
+        // Load initially empty board representation
+        drawPlayerBoard(p1);
+        drawPlayerBoard(p2);
+    </script>
+
+    <!-- Overlay Screen initial start display -->
+    <div id="screen-start" class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/95 p-6 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mb-4">
+            <i class="fa-solid fa-bolt text-indigo-400 text-3xl"></i>
+        </div>
+        <h2 class="text-3xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-pink-400 mb-2">AUGMENTED TETRIS VS</h2>
+        <p class="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+            한 화면에서 두 명의 플레이어가 맞대결을 펼칩니다! 3라인마다 획득하는 무작위 증강 능력을 연계하여 완벽한 시너지를 짜고 상대를 폭파시키세요.
+        </p>
+        <button onclick="startGame()" class="w-full max-w-[200px] py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-pink-500 hover:brightness-110 font-black text-sm tracking-widest text-white shadow-lg transition">
+            대전 모드 시작
+        </button>
+    </div>
+</body>
+</html>
